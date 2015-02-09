@@ -1,3 +1,29 @@
+This is a version of Gevent based on taking version 4.3.2 (the most
+recent production version) and editing it so that the html.parser
+back-end has a gevent-aware mode.
+
+It's very simple. What we do is call gevent.sleep(0) to voluntarily
+switch context multiple times while parsing a file. Parsing no longer
+ends up being done in a single time slice, which should prove to be a
+big win. First, overly long parse jobs will cease to hold all other
+crawling progress hostage. Second, it will be possible to use
+gevent.Timeout to interrupt and abort such long parse jobs. Third, we
+won't be using LXML to parse HTML anymore; while LXML in the typical
+case performs very well, it has a propensity to act pathologically for
+certain cases of malformed input.
+
+This repository is here as a short-to-medium-term arrangement. If the
+effort to make Beautiful Soup gevent-aware turns out, contrary to
+expectations, to not be fruitful, it will be deleted. If it turns out to
+be fruitful, I will submit my changes to the Beautiful Soup development
+team and this repository will be used to base crawler deployments on
+until such a time as they incorporate the new gevent-aware code into
+their trunk and it becomes possible to install the resulting software
+via pip.
+
+Note that Beautiful Soup itself is not hosted on Github; it is hosted on
+Launchpad, which uses bzr.
+
 = Introduction =
 
   >>> from bs4 import BeautifulSoup
