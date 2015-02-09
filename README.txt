@@ -1,5 +1,5 @@
-This is a version of Gevent based on taking version 4.3.2 (the most
-recent production version) and editing it so that the html.parser
+This is a version of Beautiful Soup based on taking version 4.3.2 (the
+most recent production version) and editing it so that the html.parser
 back-end has a gevent-aware mode.
 
 It's very simple. What we do is call gevent.sleep(0) to voluntarily
