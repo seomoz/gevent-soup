@@ -12,8 +12,12 @@ won't be using LXML to parse HTML anymore; while LXML in the typical
 case performs very well, it has a propensity to act pathologically for
 certain cases of malformed input.
 
-This repository is here as a short-to-medium-term arrangement. If the
-effort to make Beautiful Soup gevent-aware turns out, contrary to
+This repository is here as a short-to-medium-term arrangement. Its
+purpose is to allow me to test and hopefully use the modified Beautiful
+Soup code in the attercob crawler (and possibly other crawlers, should
+it prove useful for attercob).
+
+If the effort to make Beautiful Soup gevent-aware turns out, contrary to
 expectations, to not be fruitful, it will be deleted. If it turns out to
 be fruitful, I will submit my changes to the Beautiful Soup development
 team and this repository will be used to base crawler deployments on
