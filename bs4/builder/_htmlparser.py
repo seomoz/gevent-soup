@@ -11,6 +11,11 @@ from HTMLParser import (
 import sys
 import warnings
 
+try:
+    import gevent
+except ImportError:
+    gevent = None
+
 # Starting in Python 3.2, the HTMLParser constructor takes a 'strict'
 # argument, which we'd like to set to False. Unfortunately,
 # http://bugs.python.org/issue13273 makes strict=True a better bet
@@ -43,7 +48,18 @@ from bs4.builder import (
 HTMLPARSER = 'html.parser'
 
 class BeautifulSoupHTMLParser(HTMLParser):
+    def __init__(self, *args, gevent_context_switch=True, **kwargs):
+        self._cswitch = self._gevent_context_switch if gevent and gevent_context_switch else self._noop
+        HTMLParser.__init__(self, *args, **kwargs)
+
+    def _noop(self):
+        pass
+
+    def _gevent_context_switch(self):
+        gevent.sleep(0)
+
     def handle_starttag(self, name, attrs):
+        self._cswitch()
         # XXX namespace
         attr_dict = {}
         for key, value in attrs:
@@ -56,9 +72,11 @@ class BeautifulSoupHTMLParser(HTMLParser):
         self.soup.handle_starttag(name, None, None, attr_dict)
 
     def handle_endtag(self, name):
+        self._cswitch()
         self.soup.handle_endtag(name)
 
     def handle_data(self, data):
+        self._cswitch()
         self.soup.handle_data(data)
 
     def handle_charref(self, name):
@@ -87,11 +105,13 @@ class BeautifulSoupHTMLParser(HTMLParser):
         self.handle_data(data)
 
     def handle_comment(self, data):
+        self._cswitch()
         self.soup.endData()
         self.soup.handle_data(data)
         self.soup.endData(Comment)
 
     def handle_decl(self, data):
+        self._cswitch()
         self.soup.endData()
         if data.startswith("DOCTYPE "):
             data = data[len("DOCTYPE "):]
@@ -102,6 +122,7 @@ class BeautifulSoupHTMLParser(HTMLParser):
         self.soup.endData(Doctype)
 
     def unknown_decl(self, data):
+        self._cswitch()
         if data.upper().startswith('CDATA['):
             cls = CData
             data = data[len('CDATA['):]
@@ -112,6 +133,7 @@ class BeautifulSoupHTMLParser(HTMLParser):
         self.soup.endData(cls)
 
     def handle_pi(self, data):
+        self._cswitch()
         self.soup.endData()
         if data.endswith("?") and data.lower().startswith("xml"):
             # "An XHTML processing instruction using the trailing '?'
@@ -162,6 +184,23 @@ class HTMLParserTreeBuilder(HTMLTreeBuilder):
             warnings.warn(RuntimeWarning(
                 "Python's built-in HTMLParser cannot parse the given document. This is not a bug in Beautiful Soup. The best solution is to install an external parser (lxml or html5lib), and use Beautiful Soup with that parser. See http://www.crummy.com/software/BeautifulSoup/bs4/doc/#installing-a-parser for help."))
             raise e
+
+if gevent:
+    class HTMLParserTreeBuilderForGevent(HTMLTreeBuilder, HTMLParserTreeBuilder):
+
+        NAME = 'html.parser.gevent'
+        features = [NAME, HTMLPARSER, HTML, STRICT, 'gevent']
+
+        def feed(self, markup):
+            args, kwargs = self.parser_args
+            parser = BeautifulSoupHTMLParser(*args, gevent_context_switch=True, **kwargs)
+            parser.soup = self.soup
+            try:
+                parser.feed(markup)
+            except HTMLParseError, e:
+                warnings.warn(RuntimeWarning(
+                    "Python's built-in HTMLParser cannot parse the given document. This is not a bug in Beautiful Soup. The best solution is to install an external parser (lxml or html5lib), and use Beautiful Soup with that parser. See http://www.crummy.com/software/BeautifulSoup/bs4/doc/#installing-a-parser for help."))
+                raise e
 
 # Patch 3.2 versions of HTMLParser earlier than 3.2.3 to use some
 # 3.2.3 code. This ensures they don't treat markup like <p></p> as a
