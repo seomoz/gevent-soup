@@ -48,8 +48,13 @@ from bs4.builder import (
 HTMLPARSER = 'html.parser'
 
 class BeautifulSoupHTMLParser(HTMLParser):
-    def __init__(self, *args, gevent_context_switch=True, **kwargs):
-        self._cswitch = self._gevent_context_switch if gevent and gevent_context_switch else self._noop
+    def __init__(self, *args, **kwargs):
+        if 'gevent_context_switch' in kwargs:
+            gcs = kwargs['gevent_context_switch']
+            del kwargs['gevent_context_switch']
+        else:
+            gcs = False
+        self._cswitch = self._gevent_context_switch if gevent and gcs else self._noop
         HTMLParser.__init__(self, *args, **kwargs)
 
     def _noop(self):
@@ -186,14 +191,15 @@ class HTMLParserTreeBuilder(HTMLTreeBuilder):
             raise e
 
 if gevent:
-    class HTMLParserTreeBuilderForGevent(HTMLTreeBuilder, HTMLParserTreeBuilder):
+    class HTMLParserTreeBuilderForGevent(HTMLParserTreeBuilder):
 
         NAME = 'html.parser.gevent'
         features = [NAME, HTMLPARSER, HTML, STRICT, 'gevent']
 
         def feed(self, markup):
             args, kwargs = self.parser_args
-            parser = BeautifulSoupHTMLParser(*args, gevent_context_switch=True, **kwargs)
+            kwargs['gevent_context_switch'] = True
+            parser = BeautifulSoupHTMLParser(*args, **kwargs)
             parser.soup = self.soup
             try:
                 parser.feed(markup)
