@@ -44,24 +44,22 @@ from bs4.builder import (
     STRICT,
     )
 
+from bs4.gevent import GeventContextMixin
 
 HTMLPARSER = 'html.parser'
 
-class BeautifulSoupHTMLParser(HTMLParser):
+class BeautifulSoupHTMLParser(HTMLParser, GeventContextMixin):
     def __init__(self, *args, **kwargs):
         if 'gevent_context_switch' in kwargs:
             gcs = kwargs['gevent_context_switch']
             del kwargs['gevent_context_switch']
         else:
             gcs = False
-        self._cswitch = self._gevent_context_switch if gevent and gcs else self._noop
+        self._cswitch = self.cswitch if gevent and gcs else self._noop
         HTMLParser.__init__(self, *args, **kwargs)
 
     def _noop(self):
         pass
-
-    def _gevent_context_switch(self):
-        gevent.sleep(0)
 
     def handle_starttag(self, name, attrs):
         self._cswitch()
@@ -85,6 +83,7 @@ class BeautifulSoupHTMLParser(HTMLParser):
         self.soup.handle_data(data)
 
     def handle_charref(self, name):
+        self._cswitch()
         # XXX workaround for a bug in HTMLParser. Remove this once
         # it's fixed.
         if name.startswith('x'):
@@ -102,6 +101,7 @@ class BeautifulSoupHTMLParser(HTMLParser):
         self.handle_data(data)
 
     def handle_entityref(self, name):
+        self._cswitch()
         character = EntitySubstitution.HTML_ENTITY_TO_CHARACTER.get(name)
         if character is not None:
             data = character
