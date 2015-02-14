@@ -15,7 +15,7 @@ except ImportError:
 # we've been running awhile. For now, we base that solely on wall-clock
 # time to keep things simple. Consider adding CPU time to the logic if
 # the present logic proves deficient.
-def GeventContextMixin(object):
+class GeventContextMixin(object):
     __SLICE = 1.0
 
     def cswitch(self):
