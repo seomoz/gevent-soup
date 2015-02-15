@@ -6,6 +6,7 @@
 import time
 try:
     import gevent
+    assert hasattr(gevent, 'sleep')
 except ImportError:
     pass
 
