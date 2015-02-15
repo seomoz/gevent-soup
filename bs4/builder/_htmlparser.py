@@ -44,7 +44,7 @@ from bs4.builder import (
     STRICT,
     )
 
-from bs4.gevent import GeventContextMixin
+from bs4.bs_gevent import GeventContextMixin
 
 HTMLPARSER = 'html.parser'
 
