@@ -1,3 +1,16 @@
+Status: Production
+Team: Big Data
+Scope: Internal
+Product: MOZ Analytics, Instant Crawl
+Open Source: Yes
+Critical Code: Yes
+Main Purpose: Gevent-aware HTML parsing
+E-mail: dbarts@moz.com
+MOZ Package Dependencies: none
+Open Source Dependencies: none
+
+------------------------------------------------------------------------
+
 This is a version of Beautiful Soup based on taking version 4.3.2 (the
 most recent production version) and editing it so that the html.parser
 back-end has a gevent-aware mode.
